@@ -1,0 +1,8 @@
+version: "2"
+services:
+# for interactive testing
+  test:
+    build: .
+    command: sh
+    volumes:
+      - "./test:/opt/resource/test"
