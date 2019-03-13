@@ -109,13 +109,14 @@ class Resource(object):
     def do_out(self, source, params, folder):
         host, port, username, password, encrypt = parse_source(source)
             
-        filename = params.get('file')
-        log.debug('file: "%s"', filename)
+        file = params.get('file')
+        log.debug('file: "%s"', file)
         
-        if filename is None:
+        if file is None:
             raise ValueError("File name in params is mandatory!")
         
-        filepath = os.path.join(folder, filename)
+        filename = os.path.basename(file)
+        filepath = os.path.join(folder, file)
         if not os.path.exists(filepath):
             raise Exception("File '%s' not found!" % filepath)
         
