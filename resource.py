@@ -50,7 +50,9 @@ def get_version(source):
     
     log.info('connecting "%s" ...', host)
     conn = SMBConnection(username, password, localhost, host, use_ntlm_v2=True, is_direct_tcp=True)
-    assert conn.connect(ip, 445)
+    ready = conn.connect(ip, 445)
+    if not ready:
+        raise Exception("Connect failed, host, user or pass is not valid!")
     
     # version magick
     log.info('get version ...')
@@ -126,7 +128,9 @@ class Resource(object):
         # connect smb share
         log.info('connecting "%s" ...', host)
         conn = SMBConnection(username, password, localhost, host, use_ntlm_v2 = True, is_direct_tcp=True)
-        assert conn.connect(ip, 445)
+        ready = conn.connect(ip, 445)
+        if not ready:
+            raise Exception("Connect failed, host, user or pass is not valid!")
         
         # create temp folder and move package to
         remote_dir = "temp\\%s" % temp_name()
@@ -150,7 +154,7 @@ class Resource(object):
             log.debug(cmd)
             stdout, stderr, rc = psexec.run_executable("cmd.exe", arguments="/c " + cmd)
             if rc != 0:
-                raise Exception('\n'.join([stdout.decode('utf-8'), stderr.decode('utf-8')]))
+                raise Exception(stdout.decode('utf-16'))
         finally:
             psexec.remove_service()
             psexec.disconnect()        
