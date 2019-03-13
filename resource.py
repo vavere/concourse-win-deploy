@@ -150,7 +150,7 @@ class Resource(object):
             log.debug(cmd)
             stdout, stderr, rc = psexec.run_executable("cmd.exe", arguments="/c " + cmd)
             if rc != 0:
-                raise Exception(stdout + "\n" + stderr)
+                raise Exception('\n'.join([stdout.decode('utf-8'), stderr.decode('utf-8')]))
         finally:
             psexec.remove_service()
             psexec.disconnect()        
