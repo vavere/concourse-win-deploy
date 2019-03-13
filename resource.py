@@ -24,6 +24,14 @@ MAGICK_FILENAME = "concourse_win_deply"
 
 def temp_name(size=8, chars=string.ascii_uppercase + string.digits):
     return ''.join(random.choice(chars) for _ in range(size))
+    
+def mask_pass(password):
+    return "******" if password is not None else None
+    
+def mask_source(source):
+    source2 = source.copy()
+    source2['pass'] =  mask_pass(source.get('pass'))
+    return source2
         
 def parse_source(source):
     host = source.get('host')
@@ -35,7 +43,7 @@ def parse_source(source):
     log.debug('host: "%s"', host)
     log.debug('port: "%s"', port)
     log.debug('user: "%s"', username)
-    log.debug('pass: "%s"', password)
+    log.debug('pass: "%s"', mask_pass(password))
     log.debug('encrypt: "%s"', encrypt)
     
     if host is None or username is None or password is None:
@@ -83,7 +91,7 @@ class Resource(object):
           log.setLevel(logging.DEBUG)
             
         log.debug('command: "%s"', command)
-        log.debug('input: "%s"', source)
+        log.debug('input: "%s"', mask_source(source))
         log.debug('params: "%s"', params)
         log.debug('version: "%s"', version)
         log.debug('folder: "%s"', folder)
