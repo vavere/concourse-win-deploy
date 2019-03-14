@@ -76,18 +76,10 @@ def get_version(source):
         
 class Resource(object):
   
-    def run(self, command):
-        if sys.stdin.isatty():
-            raise ValueError("No valid input resceived")
-        try:
-            input = json.loads(sys.stdin.read())
-        except ValueError as e:
-            raise ValueError("Input json data not well-formed: %s" % e)
-    
+    def run(self, command, input, folder):
         source = input.get('source', {})
         params = input.get('params', {})
         version = input.get('version', {})
-        folder = sys.argv[1] if len(sys.argv) > 1 else ""
         if source.get('debug', False):
           log.setLevel(logging.DEBUG)
             
@@ -108,8 +100,7 @@ class Resource(object):
             raise ValueError("Invalid command: '%s'" % command)
     
         log.debug('response: "%s"', response)
-        output = json.dumps(response, indent=2, separators=(',', ': '))
-        sys.stdout.write(str(output) + '\n')
+        return response
         
     def check(self, source, version):
         return [{"timestamp": get_version(source)}]
@@ -199,9 +190,19 @@ class Resource(object):
         return {"version": {"timestamp": str(version)}, "metadata": []}
       
 if __name__ == '__main__':
-    r = Resource()
     try:
-        r.run(os.path.basename(__file__))
+        if sys.stdin.isatty():
+            raise ValueError("No valid input resceived")
+        try:
+            input = json.loads(sys.stdin.read())
+        except ValueError as e:
+            raise ValueError("Input json data not well-formed: %s" % e)
+        folder = sys.argv[1] if len(sys.argv) > 1 else ""
+        resource = Resource()
+        mode = os.path.basename(__file__)
+        response = resource.run(mode, input, folder)
+        output = json.dumps(response, indent=2, separators=(',', ': '))
+        sys.stdout.write(str(output) + '\n')
     except Exception as e:
         log.error(str(e))
         sys.exit(1)
