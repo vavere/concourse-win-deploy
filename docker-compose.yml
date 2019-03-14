@@ -6,3 +6,4 @@ services:
     command: sh
     volumes:
       - "./test:/opt/resource/test"
+      - "./resource.py:/opt/resource/resource.py"
