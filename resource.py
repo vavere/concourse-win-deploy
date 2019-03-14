@@ -30,7 +30,8 @@ def mask_pass(password):
     
 def mask_source(source):
     source2 = source.copy()
-    source2['pass'] =  mask_pass(source.get('pass'))
+    if 'pass' in source:
+        source2['pass'] =  mask_pass(source['pass']))
     return source2
         
 def parse_source(source):
