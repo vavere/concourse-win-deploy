@@ -50,6 +50,18 @@ def parse_source(source):
         raise ValueError("Resource host, user and pass is mandatory!")
     return host, port, username, password, encrypt
     
+def _read_file(conn, remote_path):
+    result = ''
+    log.debug('read remote content of "%s"', remote_path)
+    try:
+        with tempfile.NamedTemporaryFile() as tmp_file:
+            conn.retrieveFile(ADMIN_SERVICE, remote_path, tmp_file)
+            tmp_file.seek(0)
+            result = codecs.decode(tmp_file.read(), 'utf-16')
+    except:
+        log.error(str(e))
+    return result
+            
 def get_version(source):
     host, port, username, password, encrypt = parse_source(source)
 
@@ -154,28 +166,23 @@ class Resource(object):
         log.info('installing "%s" ...', filename)
         psexec = Client(ip, username=username, password=password, encrypt=encrypt)
         psexec.connect()
+        remote_logpath = remote_dir + "\\msiexec.log"
         try:
             psexec.create_service()
             msi_path = "%systemroot%\\" + remote_filepath
-            log_path = "%systemroot%\\" + remote_dir + "\\msiexec.log"
+            log_path = "%systemroot%\\" + remote_logpath
             cmd = "msiexec /i %s /qn /norestart /L*v %s" % (msi_path, log_path)
             log.debug(cmd)
             stdout, stderr, rc = psexec.run_executable("cmd.exe", arguments="/c " + cmd)
-            if rc != 0:
-                raise Exception(stdout.decode('utf-16'))
+            log.debug("exit code: %s", rc)
         finally:
             psexec.remove_service()
             psexec.disconnect()        
         
-        # copy log localy and dump
-        remote_logpath = remote_dir + "\\msiexec.log"
-        logpath = os.path.join(tempfile.gettempdir(), temp_name())
-        log_obj = open(logpath, "w")
-        conn.retrieveFile(ADMIN_SERVICE, remote_logpath, log_obj)
-        log_obj.close()
-        with codecs.open(logpath, 'r', encoding="utf-16") as log_file:
-            log.debug(log_file.read())
-        os.remove(logpath)
+        # dump msi log content
+        log.debug(_read_file(conn, remote_logpath))
+        if rc != 0:
+            raise Exception(stdout.decode('utf-16'))
         
         # version magick
         log.info('set version ...')
