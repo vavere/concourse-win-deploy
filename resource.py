@@ -49,26 +49,15 @@ def parse_source(source):
     if host is None or username is None or password is None:
         raise ValueError("Resource host, user and pass is mandatory!")
     return host, port, username, password, encrypt
-    
-def _read_file(conn, remote_path):
-    result = ''
-    log.debug('read remote content of "%s"', remote_path)
-    try:
-        with tempfile.NamedTemporaryFile() as tmp_file:
-            conn.retrieveFile(ADMIN_SERVICE, remote_path, tmp_file)
-            tmp_file.seek(0)
-            result = codecs.decode(tmp_file.read(), 'utf-16')
-    except:
-        log.error(str(e))
-    return result
-            
+
 def get_version(source):
     host, port, username, password, encrypt = parse_source(source)
 
+    log.info('lookup "%s" ...', host)
     ip = socket.gethostbyname(host)
     localhost = socket.gethostname()
     
-    log.info('connecting "%s" ...', host)
+    log.info('connect "%s" ...', ip)
     conn = SMBConnection(username, password, localhost, host, use_ntlm_v2=True, is_direct_tcp=True)
     ready = conn.connect(ip, 445)
     if not ready:
@@ -142,17 +131,19 @@ class Resource(object):
         if not os.path.exists(filepath):
             raise Exception("File '%s' not found!" % filepath)
         
+        log.info('lookup "%s" ...', host)
         ip = socket.gethostbyname(host)
         localhost = socket.gethostname()
         
         # connect smb share
-        log.info('connecting "%s" ...', host)
+        log.info('connect "%s" ...', ip)
         conn = SMBConnection(username, password, localhost, host, use_ntlm_v2 = True, is_direct_tcp=True)
         ready = conn.connect(ip, 445)
         if not ready:
             raise Exception("Connect failed, host, user or pass is not valid!")
         
         # create temp folder and move package to
+        log.info('prepare ...')
         remote_dir = "temp\\%s" % temp_name()
         conn.createDirectory(ADMIN_SERVICE, remote_dir)
    
@@ -163,7 +154,7 @@ class Resource(object):
         file_obj.close()
         
         # install package remotely
-        log.info('installing "%s" ...', filename)
+        log.info('install "%s" ...', filename)
         psexec = Client(ip, username=username, password=password, encrypt=encrypt)
         psexec.connect()
         remote_logpath = remote_dir + "\\msiexec.log"
@@ -178,10 +169,18 @@ class Resource(object):
         finally:
             psexec.remove_service()
             psexec.disconnect()        
-        
+
         # dump msi log content
-        log.debug(_read_file(conn, remote_logpath))
-        if rc != 0:
+        log.debug('read remote log "%s" content', remote_logpath)
+        try:
+            with tempfile.NamedTemporaryFile() as tmp_file:
+                conn.retrieveFile(ADMIN_SERVICE, remote_logpath, tmp_file)
+                tmp_file.seek(0)
+                log.debug(codecs.decode(tmp_file.read(), 'utf-16'))
+        except:
+            log.error(str(e))  # non fatal
+
+        if rc != 0: # sorry, fatal
             raise Exception(stdout.decode('utf-16'))
         
         # version magick
