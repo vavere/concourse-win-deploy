@@ -31,8 +31,11 @@ def mask_pass(password):
 def mask_source(source):
     source2 = source.copy()
     if 'pass' in source:
-        source2['pass'] =  mask_pass(source['pass']))
+        source2['pass'] =  mask_pass(source['pass'])
     return source2
+    
+def format_version(version):
+    return hex(int(str(version).replace(".", "")))[2:]
         
 def parse_source(source):
     host = source.get('host')
@@ -73,7 +76,7 @@ def get_version(source):
         version = None
 
     conn.close()
-    return str(version)
+    return format_version(version)
         
 class Resource(object):
   
@@ -104,10 +107,10 @@ class Resource(object):
         return response
         
     def check(self, source, version):
-        return [{"timestamp": get_version(source)}]
+        return [{"ref": get_version(source)}]
 
     def do_in(self, source, version, params, folder):
-        return {"version": {"timestamp": get_version(source)}, "metadata": []}      
+        return {"version": {"ref": get_version(source)}, "metadata": []}      
         
     def do_out(self, source, params, folder):
         host, port, username, password, encrypt = parse_source(source)
@@ -188,7 +191,7 @@ class Resource(object):
         conn.deleteDirectory(ADMIN_SERVICE, remote_dir)
         conn.close()
         
-        return {"version": {"timestamp": str(version)}, "metadata": []}
+        return {"version": {"ref": str(version)}, "metadata": []}
       
 if __name__ == '__main__':
     try:
