@@ -35,7 +35,7 @@ def mask_source(source):
     return source2
     
 def format_version(version):
-    return hex(int(str(version).replace(".", "")))[2:]
+    return hex(int(str(version).replace(".", "")))[2:10] # trunc 8 symb 
         
 def parse_source(source):
     host = source.get('host')
