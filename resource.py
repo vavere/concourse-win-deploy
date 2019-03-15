@@ -191,7 +191,7 @@ class Resource(object):
         conn.deleteDirectory(ADMIN_SERVICE, remote_dir)
         conn.close()
         
-        return {"version": {"ref": str(version)}, "metadata": []}
+        return {"version": {"ref": format_version(version)}, "metadata": []}
       
 if __name__ == '__main__':
     try:
