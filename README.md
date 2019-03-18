@@ -47,3 +47,7 @@ And as posibly last step in pipeline [jobs](https://concourse-ci.org/jobs.html) 
 ## Tests
 
 Sorry, I'm still learning *python*.
+
+## License
+
+The MIT License (MIT)
